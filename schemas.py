@@ -11,35 +11,52 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# Salon booking app schemas
 
-class User(BaseModel):
+class Service(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Services offered by the salon
+    Collection: "service"
+    """
+    name: str = Field(..., description="Service name, e.g., Haircut")
+    description: Optional[str] = Field(None, description="Short description")
+    duration_minutes: int = Field(..., ge=10, le=600, description="Duration in minutes")
+    price: float = Field(..., ge=0, description="Price in dollars")
+
+class Stylist(BaseModel):
+    """
+    Stylists/Professionals available for services
+    Collection: "stylist"
     """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    specialties: List[str] = Field(default_factory=list, description="List of services or skills")
+    bio: Optional[str] = Field(None, description="Short bio")
 
-class Product(BaseModel):
+class Customer(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Customers booking the appointments
+    Collection: "customer"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    name: str = Field(...)
+    phone: str = Field(..., description="Contact phone number")
+    email: Optional[EmailStr] = Field(None)
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Appointment(BaseModel):
+    """
+    Booked appointments
+    Collection: "appointment"
+    """
+    customer_id: str = Field(..., description="ID of the customer")
+    service_id: str = Field(..., description="ID of the service")
+    stylist_id: str = Field(..., description="ID of the stylist")
+    start_time: datetime = Field(..., description="Appointment start time in ISO format")
+    duration_minutes: int = Field(..., ge=10, le=600)
+    notes: Optional[str] = Field(None)
+    status: str = Field("scheduled", description="scheduled | completed | cancelled")
 
 # Note: The Flames database viewer will automatically:
 # 1. Read these schemas from GET /schema endpoint
